@@ -1,16 +1,16 @@
 import { PrismaClient, Usuario } from '@prisma/client';
 const prisma = new PrismaClient();
 
-export const getAllUsuarios = () => prisma.usuario.findMany();
+export const getAllUsers = () => prisma.usuario.findMany();
 
-export const getUsuarioById = (id: string) =>
+export const getUserById = (id: string) =>
   prisma.usuario.findUnique({ where: { id } });
 
-export const createUsuario = (data: Omit<Usuario, 'id'>) =>
+export const createUser = (data: Omit<Usuario, 'id'>) =>
   prisma.usuario.create({ data });
 
-export const updateUsuario = (id: string, data: Partial<Usuario>) =>
+export const updateUser = (id: string, data: Partial<Usuario>) =>
   prisma.usuario.update({ where: { id }, data });
 
-export const deleteUsuario = (id: string) =>
+export const deleteUser = (id: string) =>
   prisma.usuario.delete({ where: { id } });

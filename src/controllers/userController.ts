@@ -1,54 +1,65 @@
 import { Request, Response } from 'express';
 import * as userService from '../services/userService';
-import bcrypt from 'bcrypt';
 
-export const getUsuarios = async (_req: Request, res: Response) => {
-  const usuarios = await userService.getAllUsuarios();
-  res.json(usuarios);
-};
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return 'Unknown error';
+}
 
-export const getUsuario = async (req: Request, res: Response) => {
-  const usuario = await userService.getUsuarioById(req.params.id);
-  if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-  res.json(usuario);
-};
-
-export const registerUsuario = async (req: Request, res: Response) => {
-  const { nombre, email, password } = req.body;
-  if (!nombre || !email || !password)
-    return res.status(400).json({ error: 'Faltan campos obligatorios' });
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const nuevoUsuario = await userService.createUsuario({
-    nombre,
-    email,
-    password: hashedPassword,
-  });
-
-  res.status(201).json(nuevoUsuario);
-};
-
-export const updateUsuario = async (req: Request, res: Response) => {
-  const { nombre, email, password } = req.body;
-
-  let datosActualizados: any = {};
-  if (nombre) datosActualizados.nombre = nombre;
-  if (email) datosActualizados.email = email;
-  if (password) datosActualizados.password = await bcrypt.hash(password, 10);
-
+export const getUsers = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const usuario = await userService.updateUsuario(req.params.id, datosActualizados);
-    res.json(usuario);
-  } catch (error) {
-    res.status(404).json({ error: 'Usuario no encontrado' });
+    const users = await userService.getAllUsers();
+    return res.json(users);
+  } catch (error: unknown) {
+    return res.status(500).json({ message: getErrorMessage(error) });
   }
 };
 
-export const deleteUsuario = async (req: Request, res: Response) => {
+export const getUserById = async (req: Request, res: Response): Promise<Response> => {
   try {
-    await userService.deleteUsuario(req.params.id);
-    res.json({ mensaje: 'Usuario eliminado' });
-  } catch {
-    res.status(404).json({ error: 'Usuario no encontrado' });
+    const user = await userService.getUserById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.json(user);
+  } catch (error: unknown) {
+    return res.status(500).json({ message: getErrorMessage(error) });
+  }
+};
+
+export const registerUser = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { nombre, email, password } = req.body;
+    const newUser = await userService.createUser({ nombre, email, password });
+    return res.status(201).json(newUser);
+  } catch (error: unknown) {
+    return res.status(400).json({ message: getErrorMessage(error) });
+  }
+};
+
+export const updateUser = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { nombre, email, password } = req.body;
+    const updatedUser = await userService.updateUser(req.params.id, { nombre, email, password });
+    return res.json(updatedUser);
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error);
+    if (msg === 'User not found') {
+      return res.status(404).json({ message: msg });
+    }
+    return res.status(400).json({ message: msg });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    await userService.deleteUser(req.params.id);
+    return res.status(204).send();
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error);
+    if (msg === 'User not found') {
+      return res.status(404).json({ message: msg });
+    }
+    return res.status(400).json({ message: msg });
   }
 };
